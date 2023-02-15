@@ -8,7 +8,7 @@ import {
   ListGroup,
 } from "react-bootstrap";
 import { Message, User } from "../types";
-import {io} from "socket.io-client"
+import { io } from "socket.io-client";
 
 // 1. When we jump into this page, the socket.io client needs to connect to the server
 // 2. If the connection happens successfully, the server will emit an event called "welcome"
@@ -28,6 +28,7 @@ const socket = io("http://localhost:3001", { transports: ["websocket"] });
 const Home = () => {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
+  const [chatArea, setChatArea] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
@@ -49,7 +50,10 @@ const Home = () => {
 
       socket.on("newMessage", (newMessage) => {
         console.log(newMessage);
-        setChatHistory([...chatHistory, newMessage.message]);
+        setChatHistory((prevChatHistory) => [
+          ...prevChatHistory,
+          newMessage.message,
+        ]);
       });
     });
   });
@@ -63,7 +67,7 @@ const Home = () => {
     const newMessage: Message = {
       sender: username,
       text: message,
-      createdAt: new Date().toLocaleString("en-US"),
+      createdAt: new Date().toLocaleString("en-GB"),
     };
     socket.emit("sendMessage", { message: newMessage });
     setChatHistory([...chatHistory, newMessage]);
@@ -103,12 +107,16 @@ const Home = () => {
             onSubmit={(e) => {
               e.preventDefault();
               sendMessage();
+              setChatArea("");
             }}
           >
             <FormControl
               placeholder="Write your message here"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              value={chatArea}
+              onChange={(e) => {
+                setChatArea(e.target.value);
+                setMessage(e.target.value);
+              }}
               disabled={!loggedIn}
             />
           </Form>
@@ -117,7 +125,7 @@ const Home = () => {
           {/* ONLINE USERS SECTION */}
           <div className="mb-3">Connected users:</div>
           {onlineUsers.length === 0 && (
-            <ListGroup.Item>Log in to check who is online!!</ListGroup.Item>
+            <ListGroup.Item>Log in to see who's online!</ListGroup.Item>
           )}
           <ListGroup>
             {onlineUsers.map((user) => (
